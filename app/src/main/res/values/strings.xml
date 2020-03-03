@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Weedmaps</string>
+    <string name="search_for_a_business">search for a business</string>
+    <string name="search">Search</string>
+</resources>
