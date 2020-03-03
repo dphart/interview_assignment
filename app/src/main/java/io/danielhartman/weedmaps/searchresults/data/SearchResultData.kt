@@ -6,6 +6,9 @@ import io.danielhartman.weedmaps.searchresults.model.LocationModel
 import io.danielhartman.weedmaps.searchresults.model.SearchResultModel
 import io.danielhartman.weedmaps.searchresults.network.SearchResultService
 import io.danielhartman.weedmaps.searchresults.network.response.Business
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 //Open For testing
 open class SearchResultData(
@@ -16,8 +19,8 @@ open class SearchResultData(
 ) {
     var offset = 0
     val limit = 5
-    val defaultLocation = LocationModel(37.786882, 122.399972)
-    var usedLocation:LocationModel? = null
+    val defaultLocation = LocationModel(38.846464000000005, -77.1325952)
+    var usedLocation: LocationModel? = null
 
     //In Memory Cache
     var data: MutableLiveData<List<SearchResultModel>> =
@@ -36,39 +39,45 @@ open class SearchResultData(
         }
         Log.d("SearchResultData", "Using $usedLocation")
         return try {
-            val res =
-                api.getSearchResultsForTerm(searchText, offset, usedLocation!!.lat, usedLocation!!.lon).businesses.getReviewsForBusinesses()
-            data.postValue(data.value!! + res!!)
+            val businesses =
+                api.getSearchResultsForTerm(
+                    searchTerm = searchText,
+                    offset = offset,
+                    latitude = usedLocation!!.lat,
+                    longitude = usedLocation!!.lon
+                ).businesses
+            val response = getReviewsForBusinesses(businesses)
+            data.postValue(data.value!! + response!!)
             offset += limit
-            res
+            response
         } catch (e: Exception) {
             listOf()
         }
 
     }
 
-    open suspend fun List<Business>.getReviewsForBusinesses(): List<SearchResultModel>? {
-        val list = ArrayList<SearchResultModel>()
-        this.forEach {
-            try {
-                val reviews = api.getReviewsForAlias(it.alias)
-                list.add(
+    suspend fun getReviewsForBusiness(business: Business): Deferred<SearchResultModel> {
+        return coroutineScope {
+            async {
+                try {
+                    val reviews = api.getReviewsForAlias(business.alias)
                     SearchResultModel(
-                        it.name, it.image_url,
-                        reviews.reviews.maxBy { it.rating }!!.text, it.alias
+                        business.name, business.image_url,
+                        reviews.reviews.maxBy { it.rating }!!.text, business.alias
                     )
-                )
-            } catch (e: Exception) {
-                list.add(
+                } catch (e: Exception) {
                     SearchResultModel(
-                        it.name,
-                        it.image_url,
+                        business.name,
+                        business.image_url,
                         "Review Not found",
-                        it.alias
+                        business.alias
                     )
-                )
+                }
             }
         }
-        return list
+    }
+
+    open suspend fun getReviewsForBusinesses(businesses: List<Business>): List<SearchResultModel>? {
+        return businesses.map { coroutineScope { getReviewsForBusiness(it) } }.map { it.await() }
     }
 }

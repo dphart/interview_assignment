@@ -26,7 +26,7 @@ class SearchResultDataTest {
             SearchResultData(
                 "test",
                 mock {
-                    onBlocking { getSearchResultsForTerm(any(), any()) } doReturn (SearchResults(
+                    onBlocking { getSearchResultsForTerm(any(), any(), any(), any()) } doReturn (SearchResults(
                         listOf(
                             Business(
                                 name = "name",
@@ -47,7 +47,7 @@ class SearchResultDataTest {
                             )
                         )
                     )
-                })
+                }, mock {  })
         searchResultData.data.observeForever(mock {})
         val result = runBlocking { searchResultData.getAllSearchResultsAndMoveToNextPage() }
         //We check that we only return the top rated of the two results

@@ -2,10 +2,7 @@ package io.danielhartman.weedmaps.searchresults
 
 import android.location.Location
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 import io.danielhartman.weedmaps.Dependencies
 import io.danielhartman.weedmaps.searchresults.data.LocationData
 import io.danielhartman.weedmaps.searchresults.data.SearchResultData
@@ -27,8 +24,7 @@ class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData, 
             )
         }
     }
-    val latestLocation:LocationModel? = null
-
+    val loading:LiveData<Boolean> = MutableLiveData<Boolean>().apply { postValue(true) }
     fun handleAction(action:SearchResultFragment.Action){
         when(action){
             is SearchResultFragment.Action.OnEnterScreen -> handleOnEnterScreen()

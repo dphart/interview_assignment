@@ -68,11 +68,18 @@ class SearchResultFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         val term = arguments?.getString(searchResultKey) ?: ""
-        val factory = SearchResultVMFactory(term, Dependencies.searchResultData(term), Dependencies.locationData)
+        val factory = SearchResultVMFactory(
+            term,
+            Dependencies.searchResultData(term),
+            Dependencies.locationData
+        )
         viewModel = ViewModelProviders.of(this, factory).get(SearchResultVM::class.java)
         viewModel.run {
             this.searchItems.observe(viewLifecycleOwner, Observer {
                 resultAdapter.submitList(it)
+            })
+            this.loading.observe(viewLifecycleOwner, Observer {
+                if (it) binding.progressBar.show() else binding.progressBar.hide()
             })
         }
     }
