@@ -68,7 +68,7 @@ class SearchResultFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         val term = arguments?.getString(searchResultKey) ?: ""
-        val factory = SearchResultVMFactory(term, Dependencies.searchResultData(term))
+        val factory = SearchResultVMFactory(term, Dependencies.searchResultData(term), Dependencies.locationData)
         viewModel = ViewModelProviders.of(this, factory).get(SearchResultVM::class.java)
         viewModel.run {
             this.searchItems.observe(viewLifecycleOwner, Observer {

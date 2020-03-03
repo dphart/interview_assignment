@@ -10,6 +10,9 @@ interface SearchResultService {
     @GET("v3/businesses/{alias}/reviews")
     suspend fun getReviewsForAlias(@Path("alias") alias:String): SearchResultReview
 
-   @GET("v3/businesses/search?latitude=37.786882&longitude=-122.399972&limit=5")
-   suspend fun getSearchResultsForTerm(@Query("term") searchTerm:String, @Query("offset") offset:Int): SearchResults
+   @GET("v3/businesses/search?limit=5")
+   suspend fun getSearchResultsForTerm(@Query("term") searchTerm:String,
+                                       @Query("offset") offset:Int,
+                                       @Query("latitude")latitude:Double,
+                                       @Query("longitude") longitude:Double): SearchResults
 }

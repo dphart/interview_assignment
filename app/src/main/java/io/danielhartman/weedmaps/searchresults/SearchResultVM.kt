@@ -1,17 +1,21 @@
 package io.danielhartman.weedmaps.searchresults
 
+import android.location.Location
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.danielhartman.weedmaps.Dependencies
+import io.danielhartman.weedmaps.searchresults.data.LocationData
 import io.danielhartman.weedmaps.searchresults.data.SearchResultData
+import io.danielhartman.weedmaps.searchresults.model.LocationModel
 import io.danielhartman.weedmaps.searchresults.resultadapter.SearchResultItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData) : ViewModel(){
+class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData, val locationData:LocationData) : ViewModel(){
 
     @VisibleForTesting var hasRequested = false
     val searchItems:LiveData<List<SearchResultItem>> = Transformations.map(searchResultData.data){
@@ -23,6 +27,7 @@ class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData) 
             )
         }
     }
+    val latestLocation:LocationModel? = null
 
     fun handleAction(action:SearchResultFragment.Action){
         when(action){
@@ -43,15 +48,16 @@ class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData) 
             CoroutineScope(Dispatchers.IO).launch {
                 searchResultData.getAllSearchResultsAndMoveToNextPage()
             }
+
             hasRequested = true
         }
     }
 
 }
 
-class SearchResultVMFactory(val searchTerm: String, val searchResultData: SearchResultData) : ViewModelProvider.Factory{
+class SearchResultVMFactory(val searchTerm: String, val searchResultData: SearchResultData, val locationData:LocationData) : ViewModelProvider.Factory{
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return SearchResultVM(searchTerm, searchResultData) as T
+        return SearchResultVM(searchTerm, searchResultData, locationData) as T
     }
 
 }

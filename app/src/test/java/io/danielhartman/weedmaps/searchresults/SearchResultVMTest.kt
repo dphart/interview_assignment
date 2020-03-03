@@ -13,7 +13,7 @@ class SearchResultVMTest {
     @Test
     fun `Correctly Fetch the initial list when a user comes to the screen but not second time`() {
         val testTerm = "searchTerm"
-        val vm = SearchResultVM(testTerm, mock {})
+        val vm = SearchResultVM(testTerm, mock {}, mock {  })
         assertEquals(vm.hasRequested, false)
         vm.handleAction(SearchResultFragment.Action.OnEnterScreen)
         assertEquals(vm.hasRequested, true)
@@ -25,7 +25,7 @@ class SearchResultVMTest {
     @Test
     fun `User should fetch next list when scrolled to the bottom`() {
         val testTerm = "searchTerm"
-        val vm = SearchResultVM(testTerm, mock {})
+        val vm = SearchResultVM(testTerm, mock {}, mock {  })
         vm.handleAction(SearchResultFragment.Action.UserScrolledToBottom)
         verifyBlocking(vm.searchResultData, Times(1)) { getAllSearchResultsAndMoveToNextPage() }
         vm.handleAction(SearchResultFragment.Action.UserScrolledToBottom)

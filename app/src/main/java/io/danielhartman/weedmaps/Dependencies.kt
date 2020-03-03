@@ -1,5 +1,8 @@
 package io.danielhartman.weedmaps
 
+import android.app.Activity
+import android.content.Context
+import io.danielhartman.weedmaps.searchresults.data.LocationData
 import io.danielhartman.weedmaps.searchresults.data.SearchResultData
 import io.danielhartman.weedmaps.searchresults.network.SearchResultService
 import io.danielhartman.weedmaps.searchscreen.data.SearchData
@@ -12,6 +15,8 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object Dependencies {
     val recentSearches = SearchData()
+    val locationData by lazy {LocationData(appContext)  }
+    lateinit var appContext:Context
     val authToken =
         "Bearer ahTKK7vQqHWXhhU2oARfY32BJIweqjknp7jet2Zsz19IACqCrBVtwQ-0cpjsjFijwplfBXmFI40b5SblQCF03or5kIlZwNojNFXmpEunJQCHABwv5NPk-hqUZeVaXnYx"
     private val getHttpClient = let {
@@ -37,7 +42,8 @@ object Dependencies {
     fun searchResultData(term:String) =
         SearchResultData(
             term,
-            searchResultService
+            searchResultService,
+            locationData
         )
 
 }
