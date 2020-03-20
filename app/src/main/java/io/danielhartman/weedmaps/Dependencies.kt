@@ -18,7 +18,7 @@ object Dependencies {
     val locationData by lazy {LocationData(appContext)  }
     lateinit var appContext:Context
     val authToken =
-        "Bearer ahTKK7vQqHWXhhU2oARfY32BJIweqjknp7jet2Zsz19IACqCrBVtwQ-0cpjsjFijwplfBXmFI40b5SblQCF03or5kIlZwNojNFXmpEunJQCHABwv5NPk-hqUZeVaXnYx"
+        "Bearer //Insert new yelp api key here"
     private val getHttpClient = let {
         val client = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
