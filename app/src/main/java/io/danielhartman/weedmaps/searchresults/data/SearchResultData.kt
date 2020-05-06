@@ -1,11 +1,14 @@
 package io.danielhartman.weedmaps.searchresults.data
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
+import io.danielhartman.weedmaps.Error
+import io.danielhartman.weedmaps.Result
+import io.danielhartman.weedmaps.Success
 import io.danielhartman.weedmaps.searchresults.model.LocationModel
 import io.danielhartman.weedmaps.searchresults.model.SearchResultModel
 import io.danielhartman.weedmaps.searchresults.network.SearchResultService
 import io.danielhartman.weedmaps.searchresults.network.response.Business
+import io.danielhartman.weedmaps.toResult
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -14,53 +17,46 @@ import kotlinx.coroutines.coroutineScope
 open class SearchResultData(
     val searchText: String,
     val api: SearchResultService,
-    val locationData: LocationData
+    val locationData: LocationData,
+    var inMem: List<SearchResultModel> = listOf()
+
 //In the future this would also include storage
 ) {
-    var offset = 0
-    val limit = 5
-    val defaultLocation = LocationModel(38.846464000000005, -77.1325952)
-    var usedLocation: LocationModel? = null
 
-    //In Memory Cache
-    var data: MutableLiveData<List<SearchResultModel>> =
-        MutableLiveData<List<SearchResultModel>>().apply {
-            postValue(
-                listOf()
-            )
-        }
-
-    open suspend fun getAllSearchResultsAndMoveToNextPage(): List<SearchResultModel> {
-        //We are going to only make requests off of the location the user had when we make the first request. Otherwise paging could get confused and show a dup.
-        if (usedLocation == null) {
-            usedLocation =
-                locationData.lastLocation?.let { LocationModel(it.latitude, it.longitude) }
-                    ?: defaultLocation
-        }
+    suspend fun getSearchResultForPage(offset: Int): Result<List<SearchResultModel>> {
+        val usedLocation =
+            locationData.lastLocation?.let { LocationModel(it.latitude, it.longitude) }
+                ?: locationData.defaultLocation
         Log.d("SearchResultData", "Using $usedLocation")
         return try {
-            val businesses =
+            val response =
                 api.getSearchResultsForTerm(
                     searchTerm = searchText,
                     offset = offset,
-                    latitude = usedLocation!!.lat,
-                    longitude = usedLocation!!.lon
-                ).businesses
-            val response = getReviewsForBusinesses(businesses)
-            data.postValue(data.value!! + response!!)
-            offset += limit
-            response
-        } catch (e: Exception) {
-            listOf()
-        }
+                    latitude = usedLocation.lat,
+                    longitude = usedLocation.lon
+                ).toResult()
 
+            when (response) {
+                is Success -> {
+                    val res = getReviewsForBusinesses(response.data.businesses)!!
+                    inMem = inMem + res
+                    Success(inMem)
+                }
+                else -> Error(0, "uhoh")
+            }
+
+        } catch (e: Exception) {
+            Error(0, "uhoh")
+        }
     }
 
-    suspend fun getReviewsForBusiness(business: Business): Deferred<SearchResultModel> {
+
+    private suspend fun getReviewsForBusiness(business: Business): Deferred<SearchResultModel> {
         return coroutineScope {
             async {
                 try {
-                    val reviews = api.getReviewsForAlias(business.alias)
+                    val reviews = api.getReviewsForAlias(business.alias).toResult().getOrError()
                     SearchResultModel(
                         business.name, business.image_url,
                         reviews.reviews.maxBy { it.rating }!!.text, business.alias

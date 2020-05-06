@@ -1,32 +1,30 @@
 package io.danielhartman.weedmaps.searchresults
 
-import android.location.Location
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.*
-import io.danielhartman.weedmaps.Dependencies
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import io.danielhartman.weedmaps.Success
 import io.danielhartman.weedmaps.searchresults.data.LocationData
 import io.danielhartman.weedmaps.searchresults.data.SearchResultData
-import io.danielhartman.weedmaps.searchresults.model.LocationModel
 import io.danielhartman.weedmaps.searchresults.resultadapter.SearchResultItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData, val locationData:LocationData) : ViewModel(){
+class SearchResultVM(
+    val searchResultData: SearchResultData
+) : ViewModel() {
 
-    @VisibleForTesting var hasRequested = false
-    val searchItems:LiveData<List<SearchResultItem>> = Transformations.map(searchResultData.data){
-        it.map {model ->
-            SearchResultItem(
-                imageUrl = model.imageUrl,
-                name = model.name,
-                review = model.review
-            )
-        }
-    }
-    val loading:LiveData<Boolean> = MutableLiveData<Boolean>().apply { postValue(true) }
-    fun handleAction(action:SearchResultFragment.Action){
-        when(action){
+    @VisibleForTesting
+    var hasRequested = false
+    val searchItems: MutableLiveData<List<SearchResultItem>> = MutableLiveData()
+
+
+    val loading: LiveData<Boolean> = MutableLiveData<Boolean>().apply { postValue(true) }
+    fun handleAction(action: SearchResultFragment.Action) {
+        when (action) {
             is SearchResultFragment.Action.OnEnterScreen -> handleOnEnterScreen()
             is SearchResultFragment.Action.UserScrolledToBottom -> handleUserScrolledToBottom()
         }
@@ -34,26 +32,41 @@ class SearchResultVM(searchTerm:String, val searchResultData: SearchResultData, 
     }
 
     private fun handleUserScrolledToBottom() {
-        CoroutineScope(Dispatchers.IO).launch{
-            searchResultData.getAllSearchResultsAndMoveToNextPage()
+        getSearchResults()
+    }
+
+    fun getSearchResults(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = searchResultData.getSearchResultForPage(searchItems.value?.size ?: 0)
+            when (result) {
+                is Success -> {
+                    searchItems.postValue(result.data.map {
+                        SearchResultItem(
+                            it.imageUrl,
+                            it.name,
+                            it.review
+                        )
+                    })
+                }
+
+            }
         }
     }
 
     private fun handleOnEnterScreen() {
         if (!hasRequested) {
-            CoroutineScope(Dispatchers.IO).launch {
-                searchResultData.getAllSearchResultsAndMoveToNextPage()
-            }
-
+            getSearchResults()
             hasRequested = true
         }
     }
 
 }
 
-class SearchResultVMFactory(val searchTerm: String, val searchResultData: SearchResultData, val locationData:LocationData) : ViewModelProvider.Factory{
+class SearchResultVMFactory(
+    val searchResultData: SearchResultData
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        return SearchResultVM(searchTerm, searchResultData, locationData) as T
+        return SearchResultVM(searchResultData) as T
     }
 
 }

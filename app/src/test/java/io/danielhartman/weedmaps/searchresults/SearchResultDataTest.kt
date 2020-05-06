@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.Response
 
 class SearchResultDataTest {
 
@@ -26,7 +27,7 @@ class SearchResultDataTest {
             SearchResultData(
                 "test",
                 mock {
-                    onBlocking { getSearchResultsForTerm(any(), any(), any(), any()) } doReturn (SearchResults(
+                    onBlocking { getSearchResultsForTerm(any(), any(), any(), any()) } doReturn (Response.success(SearchResults(
                         listOf(
                             Business(
                                 name = "name",
@@ -34,8 +35,8 @@ class SearchResultDataTest {
                                 image_url = "image"
                             )
                         )
-                    ))
-                    onBlocking { getReviewsForAlias(any()) } doReturn SearchResultReview(
+                    )))
+                    onBlocking { getReviewsForAlias(any()) } doReturn Response.success(SearchResultReview(
                         listOf(
                             Review(
                                 text = "review1",
@@ -46,10 +47,9 @@ class SearchResultDataTest {
                                 rating = 2
                             )
                         )
-                    )
+                    ))
                 }, mock {  })
-        searchResultData.data.observeForever(mock {})
-        val result = runBlocking { searchResultData.getAllSearchResultsAndMoveToNextPage() }
+        val result = runBlocking { searchResultData.getSearchResultForPage(0) }
         //We check that we only return the top rated of the two results
         assertEquals(
             listOf(
@@ -59,11 +59,8 @@ class SearchResultDataTest {
                     review = "review2",
                     identifier = "alias"
                 )
-            ), result
+            ), result.getOrError()
         )
-        assertEquals(searchResultData.offset, searchResultData.limit * 1)
-        runBlocking { searchResultData.getAllSearchResultsAndMoveToNextPage() }
-        assertEquals(searchResultData.offset, searchResultData.limit * 2)
 
     }
 

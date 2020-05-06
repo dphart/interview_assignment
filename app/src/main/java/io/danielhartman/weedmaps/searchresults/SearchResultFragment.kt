@@ -69,9 +69,7 @@ class SearchResultFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
         val term = arguments?.getString(searchResultKey) ?: ""
         val factory = SearchResultVMFactory(
-            term,
-            Dependencies.searchResultData(term),
-            Dependencies.locationData
+            Dependencies.searchResultData(term)
         )
         viewModel = ViewModelProviders.of(this, factory).get(SearchResultVM::class.java)
         viewModel.run {

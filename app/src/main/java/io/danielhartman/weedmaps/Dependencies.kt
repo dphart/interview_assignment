@@ -8,6 +8,7 @@ import io.danielhartman.weedmaps.searchresults.network.SearchResultService
 import io.danielhartman.weedmaps.searchscreen.data.SearchData
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
@@ -48,4 +49,19 @@ object Dependencies {
 
 }
 
+fun <T>Response<T>.toResult():Result<T>{
+    return if (this.isSuccessful){
+        Success(this.body()!!)
+    } else {
+        Error(this.code(), this.message())
+    }
+}
 
+sealed class Result<T>(){
+    fun getOrError():T {
+        return (this as Success<T>).data
+    }
+    fun isSuccessful():Boolean = this is Success<T>
+}
+class Success<T>(val data:T):Result<T>()
+data class Error<T>(val code:Int, val message:String):Result<T>()
