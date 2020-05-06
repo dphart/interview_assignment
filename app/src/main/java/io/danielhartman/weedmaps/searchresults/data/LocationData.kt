@@ -7,7 +7,6 @@ import io.danielhartman.weedmaps.searchresults.model.LocationModel
 
 open class LocationData(context: Context) {
     var lastLocation: Location? = null
-    val defaultLocation = LocationModel(38.846464000000005, -77.1325952)
 
     private var locationProvider = FusedLocationProviderClient(context)
     open fun getLatestLocation() {
@@ -16,5 +15,8 @@ open class LocationData(context: Context) {
                 lastLocation = it.result
             }
         }
+    }
+    companion object {
+        val defaultLocation = LocationModel(38.846464000000005, -77.1325952)
     }
 }

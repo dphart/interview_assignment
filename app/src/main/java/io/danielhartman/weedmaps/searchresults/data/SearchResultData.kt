@@ -26,7 +26,7 @@ open class SearchResultData(
     suspend fun getSearchResultForPage(offset: Int): Result<List<SearchResultModel>> {
         val usedLocation =
             locationData.lastLocation?.let { LocationModel(it.latitude, it.longitude) }
-                ?: locationData.defaultLocation
+                ?: LocationData.defaultLocation
         Log.d("SearchResultData", "Using $usedLocation")
         return try {
             val response =
@@ -47,7 +47,7 @@ open class SearchResultData(
             }
 
         } catch (e: Exception) {
-            Error(0, "uhoh")
+            Error(0, e.toString())
         }
     }
 
